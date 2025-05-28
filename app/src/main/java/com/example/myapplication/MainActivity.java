@@ -1,9 +1,10 @@
 package com.example.myapplication;
 
-import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.SeekBar;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ListView;
 import androidx.appcompat.app.AppCompatActivity;
@@ -17,12 +18,19 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<Integer> settingValues;
     ArrayList<String> settingUnits;
     ArrayList<String> displayItemsForListView;
+    TextView editingLabelTextView;
+    TextView seekBarValueTextView;
+    SeekBar valueSeekBar;
+    int selectedItemPosition;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mainListView = findViewById(R.id.settingsListView);
+        editingLabelTextView = findViewById(R.id.editingLabelTextView);
+        seekBarValueTextView = findViewById(R.id.seekBarValueTextView);
+        valueSeekBar = findViewById(R.id.valueSeekBar);
 
         settingNames = new ArrayList<>();
         settingNames.add("Jasność Ekranu");
@@ -57,8 +65,38 @@ public class MainActivity extends AppCompatActivity {
         mainListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                selectedItemPosition = position;
                 String selectedItem = displayItemsForListView.get(position);
                 Toast.makeText(MainActivity.this, "Wybrano: " + selectedItem + ". Idealny wybór!", Toast.LENGTH_SHORT).show();
+                String selected[] = selectedItem.split(":");
+                editingLabelTextView.setText(selected[0]);
+                seekBarValueTextView.setText("Wartość: " + selected[1]);
+                valueSeekBar.setProgress(Integer.parseInt(selected[1].substring(0,selected[1].length()-1)));
+                valueSeekBar.setEnabled(true);
+            }
+        });
+
+        valueSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progressValue, boolean fromUser) {
+                if(fromUser && selectedItemPosition != -1){
+                    seekBarValueTextView.setText("Wartość: " + progressValue);
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                if(selectedItemPosition != -1){
+                    int actualValue = valueSeekBar.getProgress();
+                    String temp = settingNames.get(selectedItemPosition) + ":" + actualValue + settingUnits.get(selectedItemPosition);
+                    displayItemsForListView.set(selectedItemPosition, temp);
+                    customAdapter.notifyDataSetChanged();
+                }
             }
         });
 
